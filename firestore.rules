@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidAnalysis(data) {
+      return data.keys().hasAll(['userId', 'fileName', 'targetColumn', 'sensitiveColumn', 'fairnessScore', 'biasStatus', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.fairnessScore is number &&
+             data.createdAt == request.time;
+    }
+
+    function isValidModel(data) {
+      return data.keys().hasAll(['userId', 'name', 'version', 'deploymentDate', 'accuracy', 'biasStatus', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() <= 200 &&
+             data.version is string && data.version.size() <= 50 &&
+             data.deploymentDate is string &&
+             data.accuracy is string &&
+             data.biasStatus is string &&
+             data.biasStatus in ['Low', 'Medium', 'High'] &&
+             data.createdAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    match /analyses/{analysisId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidAnalysis(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /models/{modelId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidModel(request.resource.data);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && 
+                    request.resource.data.userId == request.auth.uid &&
+                    request.resource.data.createdAt == resource.data.createdAt &&
+                    request.resource.data.updatedAt == request.time;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      match /versions/{versionId} {
+        allow list, get: if isSignedIn() && get(/databases/$(database)/documents/models/$(modelId)).data.userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidModel(request.resource.data) && 
+                      request.resource.data.userId == get(/databases/$(database)/documents/models/$(modelId)).data.userId;
+      }
+    }
+  }
+}

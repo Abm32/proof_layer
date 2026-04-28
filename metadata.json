@@ -1,0 +1,6 @@
+{
+  "name": "ProofLayer AI",
+  "description": "An AI-powered tool to detect and explain bias in decision-making datasets using Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

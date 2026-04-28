@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "AnalysisResult": {
+      "title": "Analysis Result",
+      "description": "Historical bias analysis results for dataset audits.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID of the user who ran the analysis" },
+        "fileName": { "type": "string" },
+        "targetColumn": { "type": "string" },
+        "sensitiveColumn": { "type": "string" },
+        "fairnessScore": { "type": "number" },
+        "biasStatus": { "type": "string" },
+        "difference": { "type": "string" },
+        "groups": { "type": "object" },
+        "explanation": { "type": "string" },
+        "modelId": { "type": "string", "description": "ID of the model in inventory this audit is linked to (optional)" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fileName", "targetColumn", "sensitiveColumn", "fairnessScore", "biasStatus", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" }
+      }
+    },
+    "Model": {
+      "title": "Model",
+      "description": "Registered machine learning model entries.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "deploymentDate": { "type": "string" },
+        "accuracy": { "type": "string" },
+        "biasStatus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "version", "deploymentDate", "accuracy", "biasStatus", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/analyses/{analysisId}": {
+      "schema": "AnalysisResult",
+      "description": "Storage for audit results"
+    },
+    "/models/{modelId}": {
+      "schema": "Model",
+      "description": "Storage for model inventory"
+    },
+    "/models/{modelId}/versions/{versionId}": {
+      "schema": "Model",
+      "description": "Historical versions of a model"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile storage"
+    }
+  }
+}
